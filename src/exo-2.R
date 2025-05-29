@@ -1,56 +1,70 @@
 # Exercice 2 : Etude de cas (1)
 
 # insertion des données
-ventes <- c(3, 4, 6, 21,
-          2, 4, 6, 24,
-          3, 4, 7, 26)
+annees <- c(2019, 2020, 2021, 2022)
+trimestres <- 1:4
+ventes <- c(4, 3, 5, 22,
+            3, 4, 6, 21,
+            2, 4, 6, 24,
+            3, 4, 7, 26)
 
-serie <- ts(ventes, start= c(2020,1), frequency = 4)
-
-# print(serie)
+temps <- 1:length(ventes)  # 16 periodes
 
 # 1.
-plot(serie, xaxt = "n", main = "Ventes trimestrielles de dinde (2020-2022)", ylab = "Ventes", xlab = "Année")
-axis(1, at = seq(2020, 2022, by = 1), labels = c("2020", "2021", "2022"))
+plot(temps, ventes, type = "o", main = "Série chronologique des ventes", xlab = "Periodes", ylab = "Ventes")
+
 
 # 2. 
-temps <- 1:length(serie)
-modele <- lm(serie ~ temps) # equation : y = a * x + b
+n <- length(temps)
+Sx <- sum(temps)
+Sy <- sum(ventes)
+Sxx <- sum(temps^2)
+Sxy <- sum(temps * ventes)
 
-plot(temps, serie, type = "o", main = "Ajustement affine", ylab = "Ventes", xlab = "Temps")
-abline(modele, col = "blue", lwd = 2)
+# coefficients a (pente) et b (ordonnée) pour y = ax + b
+a <- (n * Sxy - Sx * Sy) / (n * Sxx - Sx^2)
+b <- (Sy - a * Sx) / n
+cat("Droite d'ajustement : Y =", round(a, 4), "* t +", round(b, 4), "\n")
+abline(a = b, b = a, col = "blue")
 
 
 # 3.
-library(TTR)  # pour les moyennes mobiles
-moyenne_mobile <- SMA(serie, n = 4)
+moy_mobiles <- rep(NA, n - 3)
+for (i in 1:(n - 3)) {
+  moy_mobiles[i] <- mean(ventes[i:(i+3)])
+}
+print(moy_mobiles)
 
-plot(serie, type = "l", col = "black", xaxt = "n", main = "Moyenne mobile", ylab = "Ventes")
-axis(1, at = seq(2020, 2022, by = 1), labels = c("2020", "2021", "2022"))
-lines(moyenne_mobile, col = "red")
-legend("topleft", legend = c("Données", "Moyenne mobile"), col = c("black", "red"), lty = 1)
+# extraction de la tendance estimee
+tendance <- c(NA, moy_mobiles, NA)  # pour aligner sur les donnees
+print(tendance)
+
+# differences saisonnieres
+residus <- ventes - tendance
+print(residus)
 
 # 4.
-# on commence par la decomposition
-# ventes = tendance + saisonnalité + aléa
-decomp <- decompose(serie, type = "additive")
-plot(decomp)
+# calcul des moyennes des residus par trimestre
+saisons <- matrix(residus, nrow = 4)
+coeffs_saisonniers <- colMeans(saisons, na.rm = TRUE)
 
-# on extrait les composantes
-saisonnalite <- decomp$seasonal
-tendance <- decomp$trend
-residu <- decomp$random
+# centrage des coefficients saisonniers
+coeffs_saisonniers <- coeffs_saisonniers - mean(coeffs_saisonniers)
 
-# série désaisonnalisée
-desaisonnalisee <- serie - saisonnalite
-plot(desaisonnalisee, xaxt = "n", main = "Série désaisonnalisée", ylab = "Ventes", xlab = "Année")
-axis(1, at = seq(2020, 2022, by = 1), labels = c("2020", "2021", "2022"))
+# serie desaisonnalisee
+desaisonnalisee <- ventes - rep(coeffs_saisonniers, times = 4)
+
+print(coeffs_saisonniers)
+print(desaisonnalisee)
 
 # 5.
 # prevoir tendance au trimestre 4 de 2025
-nouveau_temps <- length(serie) + (4 * (2025 -2022)) # 12 + 12 = 24
-prevision_tendance <- predict(modele, newdata = data.frame(temps = nouveau_temps))
-coeff_saisonnier_q4 <- saisonnalite[4]
-prevision_finale <- prevision_tendance + coeff_saisonnier_q4
+# t = 28 pour T4 2025
+t_2025_T4 <- 28
+tendance_2025_T4 <- a * t_2025_T4 + b
 
-cat("Prévision pour le T4 2025 :", prevision_finale, "\n")
+# ajout du coefficient saisonnier T4
+saisonnalite_T4 <- coeffs_saisonniers[4]
+prevision <- tendance_2025_T4 + saisonnalite_T4
+
+cat("Prévision pour T4 2025 :", round(prevision, 2), "\n")
