@@ -15,6 +15,8 @@
 • Commenter et interpréter les résultats lors de la soutenance.
 
 ### Collaborateurs : 
-SALHAB Charbel
-AMEGAH Komlan Godwin
-BENHADDAD Lamia
+- SALHAB Charbel
+
+- AMEGAH Komlan Godwin
+
+- BENHADDAD Lamia
