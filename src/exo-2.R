@@ -68,3 +68,14 @@ saisonnalite_T4 <- coeffs_saisonniers[4]
 prevision <- tendance_2025_T4 + saisonnalite_T4
 
 cat("Prévision pour T4 2025 :", round(prevision, 2), "\n")
+
+plot(temps, ventes, type = "o", col = "blue",
+     ylim = c(min(ventes), max(ventes)+5),
+     xlim = c(min(temps), t_2025_T4),
+     xlab = "Temps (trimestres)", ylab = "Ventes",
+     main = "Ventes + Prévision")
+
+abline(a = b, b = a, col = "red")  # droite de tendance
+points(t_2025_T4, prevision, col = "green", pch = 19)  # point prévision
+text(t_2025_T4, prevision + 1, labels = round(prevision, 1), col = "green")  # valeur
+
