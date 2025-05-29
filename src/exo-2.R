@@ -43,7 +43,7 @@ residu <- decomp$random
 
 # série désaisonnalisée
 desaisonnalisee <- serie - saisonnalite
-plot(desaisonnalisee, xaxt = "n", main = "Série désaisonnalisée", ylab = "Ventes")
+plot(desaisonnalisee, xaxt = "n", main = "Série désaisonnalisée", ylab = "Ventes", xlab = "Année")
 axis(1, at = seq(2020, 2022, by = 1), labels = c("2020", "2021", "2022"))
 
 # 5.
