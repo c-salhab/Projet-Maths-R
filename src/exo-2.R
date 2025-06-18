@@ -1,81 +1,102 @@
-# Exercice 2 : Etude de cas (1)
+# 1. 
 
-# insertion des données
-annees <- c(2019, 2020, 2021, 2022)
-trimestres <- 1:4
 ventes <- c(4, 3, 5, 22,
             3, 4, 6, 21,
             2, 4, 6, 24,
             3, 4, 7, 26)
 
-temps <- 1:length(ventes)  # 16 periodes
-
-# 1.
-plot(temps, ventes, type = "o", main = "Série chronologique des ventes", xlab = "Periodes", ylab = "Ventes")
-
+plot(ventes, type = "o", main = "Ventes trimestrielles de dindes", xlab = "Trimestre", ylab = "Ventes")
 
 # 2. 
-n <- length(temps)
-Sx <- sum(temps)
-Sy <- sum(ventes)
-Sxx <- sum(temps^2)
-Sxy <- sum(temps * ventes)
 
-# coefficients a (pente) et b (ordonnée) pour y = ax + b
-a <- (n * Sxy - Sx * Sy) / (n * Sxx - Sx^2)
-b <- (Sy - a * Sx) / n
-cat("Droite d'ajustement : Y =", round(a, 4), "* t +", round(b, 4), "\n")
-abline(a = b, b = a, col = "blue")
+t <- 1:16
+n <- length(t)
+somme_xt <- sum(t * ventes)
+somme_t <- sum(t)
+somme_x <- sum(ventes)
+somme_t2 <- sum(t^2)
+
+a <- (n * somme_xt - somme_t * somme_x) / (n * somme_t2 - somme_t^2)
+b <- (somme_x - a * somme_t) / n
+Tt <- a * t + b
+
+print(a)
+print(b)
+
+plot(t, ventes, type = "o",
+     main = "Ventes trimestrielles de dindes",
+     xlab = "Trimestre", ylab = "Ventes")
+lines(t, Tt, col = "red", lwd = 2)
+legend("topleft", legend = c("Ventes", "Droite d'ajustement affine"),
+       col = c("black", "red"), lty = c(1, 1), lwd = 2)
 
 
-# 3.
-moy_mobiles <- rep(NA, n - 3)
-for (i in 1:(n - 3)) {
-  moy_mobiles[i] <- mean(ventes[i:(i+3)])
+# 3. 
+
+# moyenne mobile pondérée centrée 4 (formule sujet)
+MM <- rep(NA, 16)
+for (i in 3:14) {
+  MM[i] <- (ventes[i - 2] + 2 * ventes[i - 1] + 2 * ventes[i + 1] + ventes[i + 2]) / 6
 }
-print(moy_mobiles)
 
-# extraction de la tendance estimee
-tendance <- c(NA, moy_mobiles, NA)  # pour aligner sur les donnees
-print(tendance)
+# diff saisonieres 
+St_hat <- ventes - Tt
 
-# differences saisonnieres
-residus <- ventes - tendance
-print(residus)
+resultats_q3 <- data.frame(
+  Trimestre = t,
+  Ventes = ventes,
+  Tendance = round(Tt, 2),
+  MoyMob = round(MM, 2),
+  DiffSaison = round(St_hat, 2)
+)
 
-# 4.
-# calcul des moyennes des residus par trimestre
-saisons <- matrix(residus, nrow = 4)
-coeffs_saisonniers <- colMeans(saisons, na.rm = TRUE)
+print(resultats_q3)
 
-# centrage des coefficients saisonniers
-coeffs_saisonniers <- coeffs_saisonniers - mean(coeffs_saisonniers)
+# 4. 
 
-# serie desaisonnalisee
-desaisonnalisee <- ventes - rep(coeffs_saisonniers, times = 4)
+St_mat <- matrix(St_hat, ncol = 4, byrow = TRUE)
+St_moy <- colMeans(St_mat)
 
-print(coeffs_saisonniers)
-print(desaisonnalisee)
+St_corr <- St_moy - mean(St_moy)
 
-# 5.
-# prevoir tendance au trimestre 4 de 2025
-# t = 28 pour T4 2025
-t_2025_T4 <- 28
-tendance_2025_T4 <- a * t_2025_T4 + b
+Xt_deseason <- ventes - rep(St_corr, 4)
 
-# ajout du coefficient saisonnier T4
-saisonnalite_T4 <- coeffs_saisonniers[4]
-prevision <- tendance_2025_T4 + saisonnalite_T4
+resultats_q4 <- data.frame(
+  Trimestre = t,
+  Ventes = ventes,
+  Saisonnalite = rep(round(St_corr, 2), 4),
+  Deseasonnalisee = round(Xt_deseason, 2)
+)
 
-cat("Prévision pour T4 2025 :", round(prevision, 2), "\n")
+print(resultats_q4)
 
-plot(temps, ventes, type = "o", col = "blue",
-     ylim = c(min(ventes), max(ventes)+5),
-     xlim = c(min(temps), t_2025_T4),
-     xlab = "Temps (trimestres)", ylab = "Ventes",
-     main = "Ventes + Prévision")
 
-abline(a = b, b = a, col = "red")  # droite de tendance
-points(t_2025_T4, prevision, col = "green", pch = 19)  # point prévision
-text(t_2025_T4, prevision + 1, labels = round(prevision, 1), col = "green")  # valeur
+plot(t, ventes, type = "o",
+     main = "Ventes trimestrielles de dindes",
+     xlab = "Trimestre", ylab = "Ventes")
+lines(t, Xt_deseason, col = "blue", lwd = 2, lty = 2)
+legend("topleft", legend = c("Ventes", "Désaisonnalisée"),
+       col = c("black", "blue"), lty = c(1, 2), lwd = 2)
+
+t_future <- 28
+T_future <- a * t_future + b
+S4 <- St_corr[4]
+X_pred <- T_future + S4
+
+plot(t, ventes, type = "o",
+     ylim = c(min(ventes), X_pred + 5),
+     xlim = c(1, 30),
+     main = "Ventes trimestrielles de dindes",
+     xlab = "Trimestre", ylab = "Ventes")
+
+lines(t, Tt, col = "red", lwd = 2)
+# La ligne désaisonnalisée est supprimée ici
+# lines(t, Xt_deseason, col = "blue", lwd = 2, lty = 2)
+
+points(t_future, X_pred, col = "green", pch = 19, cex = 1.5)
+text(t_future, X_pred + 1, labels = paste("Prévision :", round(X_pred, 2)), col = "green")
+
+legend("topleft", legend = c("Ventes", "Tendance", "Prévision"),
+       col = c("black", "red", "green"),
+       lty = c(1, 1, NA), pch = c(1, NA, 19), lwd = 2)
 
